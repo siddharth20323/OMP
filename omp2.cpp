@@ -1,14 +1,14 @@
 #include <iostream>
 #include <climits>
 #include <queue>
-#include <utility>
+#include <omp.h>
+
 using namespace std;
 
 #define node 100  // Maximum number of nodes
 
 int find_min_distance(int dist[], bool visited[], int n) {
-    int min = INT_MAX;
-    int min_index = -1;
+    int min = INT_MAX, min_index = -1;
 
     for (int i = 0; i < n; ++i) {
         if (!visited[i] && dist[i] < min) {
@@ -17,7 +17,7 @@ int find_min_distance(int dist[], bool visited[], int n) {
         }
     }
 
-    return min_index;
+    return min_index; // Ensure this isn't -1 in the main function
 }
 
 void dijkstra(int graph[node][node], int src, int n) {
@@ -28,17 +28,22 @@ void dijkstra(int graph[node][node], int src, int n) {
         dist[i] = INT_MAX;
     }
     dist[src] = 0;
-     
 
     for (int c = 0; c < n - 1; c++) {
         int u = find_min_distance(dist, visited, n);
+        if (u == -1) break; // Stop if no reachable node remains
+
         visited[u] = true;
 
         #pragma omp parallel for
         for (int v = 0; v < n; ++v) {
-            if(!visited[v] && graph[u][v] != INT_MAX && dist[u] != INT_MAX
-                && dist[u] + graph[u][v] < dist[v]) {
-                dist[v] = dist[u] + graph[u][v];
+            if (!visited[v] && graph[u][v] != INT_MAX && dist[u] != INT_MAX) {
+                #pragma omp critical // Prevent race conditions in updating dist[v]
+                {
+                    if (dist[u] + graph[u][v] < dist[v]) {
+                        dist[v] = dist[u] + graph[u][v];
+                    }
+                }
             }
         }
     }
@@ -63,6 +68,7 @@ int main() {
         for (int j = 0; j < n; ++j) {
             graph[i][j] = INT_MAX;
         }
+        graph[i][i] = 0; // Ensure self-loops have 0 weight
     }
 
     cout << "Enter edges (u v w) for each edge (u, v) with weight w:" << endl;
