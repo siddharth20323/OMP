@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <omp.h>
 
-using namespace std; // Added namespace directive
+using namespace std;
 
 const int MAX_VAL = 100; // Maximum value for histogram range
 const int N = 12;        // Number of elements
@@ -18,13 +18,23 @@ void histogram_sort(int arr[], int size) {
         histogram[arr[i]]++;
     }
 
-    // Reconstruct sorted array from histogram
-    int index = 0;
-    #pragma omp parallel for
-    for (int i = 0; i < MAX_VAL; i++) {
-        for (int j = 0; j < histogram[i]; j++) {
-            arr[index++] = i;
+    // Reconstruct sorted array
+    int sorted_arr[N];  // Local copy to avoid conflicts
+
+    #pragma omp parallel
+    {
+        int local_index = 0;
+
+        for (int i = 0; i < MAX_VAL; i++) {
+            for (int j = 0; j < histogram[i]; j++) {
+                sorted_arr[local_index++] = i;
+            }
         }
+    }
+
+    // Copy back to original array
+    for (int i = 0; i < size; i++) {
+        arr[i] = sorted_arr[i];
     }
 }
 
