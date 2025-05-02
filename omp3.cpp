@@ -146,3 +146,15 @@ int main() {
 
     return 0;
 }
+
+Enter number of vertices: 5
+Enter number of edges: 4
+Enter the edges (u v) where u and v are connected:
+0 1
+0 2
+1 3
+3 4
+Enter the starting node: 0
+BFS Traversal: 0 1 2 3 4 
+
+    
